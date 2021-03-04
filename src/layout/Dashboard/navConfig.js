@@ -21,6 +21,17 @@ export default [
 					},
 				],
 			},
+			{
+				title: "Indstilllinger",
+				href: "/user",
+				icon: BarChartIcon,
+				items: [
+					{
+						title: "Rediger info",
+						href: "/user/update",
+					},
+				],
+			},
 		],
 	},
 ];

@@ -1,31 +1,38 @@
 import React, { useEffect, useState } from "react";
 import { makeStyles } from "@material-ui/styles";
-import { Container } from "@material-ui/core";
+import { CircularProgress, Container } from "@material-ui/core";
 import { useSelector } from "react-redux";
 import axios from "../../../axios";
-
+import { Link as RouterLink } from "react-router-dom";
+import Snackbar from "../../../components/Snackbar";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
+import Button from "@material-ui/core/Button";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import ListItemText from "@material-ui/core/ListItemText";
 import Checkbox from "@material-ui/core/Checkbox";
 import IconButton from "@material-ui/core/IconButton";
 import DeleteIcon from "@material-ui/icons/Delete";
+import Header from "./Header";
+import EditIcon from "@material-ui/icons/Edit";
 
 const useStyles = makeStyles((theme) => ({
 	root: {
 		width: "100%",
-		maxWidth: 360,
 		backgroundColor: theme.palette.background.paper,
 	},
 }));
 
-const Items = () => {
+const Items = ({ match }) => {
 	const classes = useStyles();
 	const [checked, setChecked] = React.useState([0]);
 	const state = useSelector((state) => state);
 	const [items, setItems] = useState([]);
+	const [isLoading, setIsLoading] = useState(false);
+	const [snackbarOpen, setSnackbarOpen] = useState(false);
+	const [snackbarMessage, setSnackbarMessage] = useState("");
+	const [snackbarSeverity, setSnackbarSeverity] = useState("");
 
 	useEffect(() => {
 		// if the id isset then the thing already exist and we want to view/update it
@@ -35,14 +42,19 @@ const Items = () => {
 	}, [state.auth.userId]);
 
 	const fetchItems = () => {
+		setIsLoading(true);
 		axios
 			.get(`/api/todoitem/${state.auth.userId}`)
 			.then((res) => {
 				console.log(res);
 
+				setIsLoading(false);
 				setItems(res.data.todoItems);
 			})
-			.catch((err) => console.log(err));
+			.catch((err) => {
+				console.log(err);
+				setIsLoading(false);
+			});
 	};
 
 	const handleToggle = (value) => () => {
@@ -62,7 +74,7 @@ const Items = () => {
 			console.log(data);
 
 			axios
-				.put(`/api/todoitem/${item[0].id}`, data)
+				.put(`/api/todoitem/`, data)
 				.then((res) => {
 					console.log(res);
 
@@ -78,14 +90,36 @@ const Items = () => {
 			.then((res) => {
 				console.log(res);
 
+				handleSnackbarClick("Todo slettet!", "success");
+
 				fetchItems();
 			})
-			.catch((err) => console.log(err));
+			.catch((err) => {
+				console.log(err);
+				handleSnackbarClick("Kunne ikke slette todo!", "error");
+			});
+	};
+
+	const handleSnackbarClick = (message, severity) => {
+		setSnackbarMessage(message);
+		setSnackbarSeverity(severity);
+		setSnackbarOpen(true);
+	};
+
+	const handleSnackbarClose = (event, reason) => {
+		if (reason === "clickaway") return;
+		setSnackbarMessage("");
+		setSnackbarSeverity("");
+		setSnackbarOpen(false);
 	};
 
 	return (
 		<Container>
+			<Header />
 			<List className={classes.root}>
+				{isLoading ? <CircularProgress /> : null}
+
+				{!isLoading && items.length <= 0 ? <div>Du har ikke nogle todo endnu</div> : null}
 				{items.map((item) => {
 					const labelId = `checkbox-list-label-${item.id}`;
 
@@ -100,8 +134,13 @@ const Items = () => {
 									inputProps={{ "aria-labelledby": labelId }}
 								/>
 							</ListItemIcon>
-							<ListItemText id={labelId} primary={`${item.title}`} />
+							<ListItemText id={labelId} primary={`${item.title}`} secondary={`${item.description}`} />
 							<ListItemSecondaryAction>
+								<IconButton aria-label="update">
+									<Button component={RouterLink} to={`/todo/update/${item.id}`}>
+										<EditIcon />
+									</Button>
+								</IconButton>
 								<IconButton edge="end" aria-label="delete">
 									<DeleteIcon onClick={onDeleteHandler(item.id)} />
 								</IconButton>
@@ -110,6 +149,15 @@ const Items = () => {
 					);
 				})}
 			</List>
+			{snackbarMessage && snackbarOpen && snackbarSeverity ? (
+				<Snackbar
+					open={snackbarOpen}
+					autoHideDuration={6000}
+					message={snackbarMessage}
+					onClose={handleSnackbarClose}
+					severity={snackbarSeverity}
+				/>
+			) : null}
 		</Container>
 	);
 };

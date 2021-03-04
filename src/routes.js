@@ -7,7 +7,9 @@ import AuthLayout from "./layout/Auth";
 import ErrorLayout from "./layout/Error";
 
 import Todo from "./views/Todo/Items/Todo";
-import TodoCreate from "./views/Todo/Create/";
+import TodoCreate from "./views/Todo/Create";
+import UpdateUser from "./views/Auth/Update";
+import UpdateUserPassword from "./views/Auth/UpdatePassword";
 
 export default [
 	{
@@ -71,6 +73,21 @@ export default [
 				path: "/todo/create",
 				exact: true,
 				component: TodoCreate,
+			},
+			{
+				path: "/todo/update/:id",
+				exact: true,
+				component: TodoCreate,
+			},
+			{
+				path: "/user/update",
+				exact: true,
+				component: UpdateUser,
+			},
+			{
+				path: "/user/updatepassword",
+				exact: true,
+				component: UpdateUserPassword,
 			},
 		],
 	},
